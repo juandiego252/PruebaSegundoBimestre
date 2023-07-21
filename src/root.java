@@ -2,6 +2,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 import personas.*;
 
@@ -25,55 +28,163 @@ public class root {
     private JRadioButton noRadioButton;
     private JPanel root;
 
-    public String filePath = "binary data.dat";
-    public persona person1[] = new persona[5];
+    private List <persona> listadatosPersonas;
+    private int posicionActual;
     public root() {
+        listadatosPersonas = new ArrayList<>();
+        posicionActual = 0;
+
         guardarDatosButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                String codigo = codtext.getText();
+                String cedula = citext.getText();
+                String nombre = nametext.getText();
+                String apellido = apellidotext.getText();
+
+                String zodiaco = comboBox1.getSelectedItem().toString();
+                String anio = comboBox2.getSelectedItem().toString();
+                String mes = comboBox3.getSelectedItem().toString();
+                String dia = comboBox4.getSelectedItem().toString();
+
+                boolean rojo = rojoCheckBox.isSelected();
+                boolean verde = verdeCheckBox.isSelected();
+                boolean ninguno = ningunoCheckBox.isSelected();
+
+                boolean sicasado = siRadioButton.isSelected();
+                boolean nocasado = noRadioButton.isSelected();
+
+                persona datosPersonas = new persona(codigo,cedula,nombre,apellido,zodiaco,anio,mes,dia,rojo,verde,
+                        ninguno,sicasado,nocasado);
+
+                listadatosPersonas.add(datosPersonas);
+
                 try {
-                    FileOutputStream fileOut = new FileOutputStream(filePath);
-                    ObjectOutputStream obOut = new ObjectOutputStream(fileOut);
-                    obOut.writeObject(person1);
-                    System.out.println("Datos Guardados exitosamente");
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                    FileOutputStream fileObj = new FileOutputStream("binarydata.dat");
+                    ObjectOutputStream ObOut = new ObjectOutputStream(fileObj);
+
+                    ObOut.writeObject(listadatosPersonas);
+
+                    ObOut.close();
+                    fileObj.close();
+
+                    JOptionPane.showMessageDialog(root, "Datos guardados correctamente.", "Guardar Datos", JOptionPane.INFORMATION_MESSAGE);
+
+                    codtext.setText("");
+                    citext.setText("");
+                    nametext.setText("");
+                    apellidotext.setText("");
+
+                    comboBox1.setSelectedIndex(0);
+                    comboBox2.setSelectedIndex(0);
+                    comboBox3.setSelectedIndex(0);
+                    comboBox4.setSelectedIndex(0);
+
+                    rojoCheckBox.setSelected(false);
+                    verdeCheckBox.setSelected(false);
+                    ningunoCheckBox.setSelected(false);
+
+                    siRadioButton.setSelected(false);
+                    noRadioButton.setSelected(false);
+
+                } catch (IOException ex){
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(root, "Error al guardar los datos.", "Guardar Datos", JOptionPane.ERROR_MESSAGE);
+
+
                 }
+
             }
         });
         cargarDatosButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    FileInputStream fileIn = new FileInputStream(filePath);
-                    ObjectInputStream obIn = new ObjectInputStream(fileIn);
-                    persona readObject = (persona) obIn.readObject();
-                }catch (Exception E){
-                    codtext.setText("2021359");
-                    citext.setText("1755014238");
-                    nametext.setText("Diego");
-                    apellidotext.setText("Cordova");
+                    FileInputStream fileIn = new FileInputStream("binarydata.dat");
+                    ObjectInputStream ObIn = new ObjectInputStream(fileIn);
+
+                    listadatosPersonas = (List<persona>) ObIn.readObject();
+
+                    if (listadatosPersonas.isEmpty()){
+                        JOptionPane.showMessageDialog(root, "No se encontraron datos guardados.", "Cargar Datos", JOptionPane.INFORMATION_MESSAGE);
+
+                    } else {
+                        cargarDatosPersona(posicionActual);
+                        persona datosPersona = listadatosPersonas.get(0);
+
+                        codtext.setText(datosPersona.getCodigo());
+                        citext.setText(datosPersona.getCedula());
+                        nametext.setText(datosPersona.getNombres());
+                        apellidotext.setText(datosPersona.getApellidos());
+
+                        comboBox1.setSelectedItem(datosPersona.getZodiaco());
+                        comboBox2.setSelectedItem(datosPersona.getAnio());
+                        comboBox3.setSelectedItem(datosPersona.getAnio());
+                        comboBox4.setSelectedItem(datosPersona.getDia());
+
+                        rojoCheckBox.setSelected(datosPersona.isRojo());
+                        verdeCheckBox.setSelected(datosPersona.isVerde());
+                        ningunoCheckBox.setSelected(datosPersona.isNinguno());
+
+                        siRadioButton.setSelected(datosPersona.isSicasado());
+                        noRadioButton.setSelected(datosPersona.isNocasado());
+                        JOptionPane.showMessageDialog(root, "Datos cargados correctamente.", "Cargar Datos", JOptionPane.INFORMATION_MESSAGE);
+                    }
+
+                    ObIn.close();
+                    fileIn.close();
+
+                } catch (IOException  | ClassNotFoundException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(root, "Error al cargar los datos.", "Cargar Datos", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        siguiente.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!listadatosPersonas.isEmpty()){
+                    posicionActual++;
+                    if (posicionActual >= listadatosPersonas.size()){
+                        posicionActual = 0; // reiniciar la posicion actual
+                    }
+                    cargarDatosPersona(posicionActual);
                 }
             }
         });
         antras.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                codtext.setText("2022929");
-                citext.setText("1735787282");
-                nametext.setText("Adrian");
-                apellidotext.setText("Lopez");
+                if (!listadatosPersonas.isEmpty()){
+                    posicionActual--;
+                    if (posicionActual < 0){
+                        posicionActual = listadatosPersonas.size() - 1; // retroceder al final si se alcanza el principo de la lista
+                    }
+                    cargarDatosPersona(posicionActual);
+                }
             }
         });
-        siguiente.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                codtext.setText("2021359");
-                citext.setText("1788989");
-                nametext.setText("Fabian");
-                apellidotext.setText("Correa");
-            }
-        });
+    }
+
+    private void cargarDatosPersona(int indice) {
+        persona datosPersona = listadatosPersonas.get(indice);
+
+        codtext.setText(datosPersona.getCodigo());
+        citext.setText(datosPersona.getCedula());
+        nametext.setText(datosPersona.getNombres());
+        apellidotext.setText(datosPersona.getApellidos());
+
+        comboBox1.setSelectedItem(datosPersona.getZodiaco());
+        comboBox2.setSelectedItem(datosPersona.getAnio());
+        comboBox3.setSelectedItem(datosPersona.getMes());
+        comboBox4.setSelectedItem(datosPersona.getDia());
+
+        rojoCheckBox.setSelected(datosPersona.isRojo());
+        verdeCheckBox.setSelected(datosPersona.isVerde());
+        ningunoCheckBox.setSelected(datosPersona.isNinguno());
+
+        siRadioButton.setSelected(datosPersona.isSicasado());
+        noRadioButton.setSelected(datosPersona.isNocasado());
     }
 
     public static void main(String[] args) {
@@ -83,4 +194,4 @@ public class root {
         frame.pack();
         frame.setVisible(true);
     }
-}
+};
